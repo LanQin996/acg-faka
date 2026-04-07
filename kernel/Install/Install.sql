@@ -153,6 +153,7 @@ CREATE TABLE `__PREFIX__commodity`  (
                                         `shared_premium` float(10, 2) UNSIGNED NULL DEFAULT 0.00 COMMENT '商品加价',
                                         `shared_stock` json DEFAULT NULL COMMENT '库存信息',
                                         `stock` int(11) DEFAULT NULL COMMENT '库存',
+                                        `order_sold_base` int UNSIGNED NOT NULL DEFAULT 0 COMMENT '已售初始值',
                                         `shared_premium_type` tinyint UNSIGNED NULL DEFAULT 0 COMMENT '加价模式',
                                         `seckill_status` tinyint UNSIGNED NOT NULL DEFAULT 0 COMMENT '商品秒杀：0=关闭，1=开启',
                                         `seckill_start_time` datetime NULL DEFAULT NULL COMMENT '秒杀开始时间',
@@ -186,7 +187,7 @@ CREATE TABLE `__PREFIX__commodity`  (
                                         INDEX `recommend`(`recommend` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
 
-INSERT INTO `__PREFIX__commodity` VALUES (1, 1, 'DEMO', '<p>该商品是演示商品</p>', '/favicon.ico', 0.00, 1.00, 0.90, 1, 0, '2021-11-26 18:01:30', 1, '8AE80574F3CA98BE', 1, 0, '', 0, 0, 1, 1, NULL, '', 0.00 , NULL,999999, 0, 0, NULL, NULL, 0, 0.00, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
+INSERT INTO `__PREFIX__commodity` VALUES (1, 1, 'DEMO', '<p>该商品是演示商品</p>', '/favicon.ico', 0.00, 1.00, 0.90, 1, 0, '2021-11-26 18:01:30', 1, '8AE80574F3CA98BE', 1, 0, '', 0, 0, 1, 1, NULL, '', 0.00 , NULL,999999, 0, 0, 0, NULL, NULL, 0, 0.00, 0, NULL, 0, 0, 0, 0, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
 
 
 

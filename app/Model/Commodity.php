@@ -8,6 +8,8 @@ use App\Util\Ini;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Capsule\Manager;
+use Illuminate\Database\Schema\Blueprint;
 use Kernel\Exception\JSONException;
 
 /**
@@ -55,9 +57,12 @@ use Kernel\Exception\JSONException;
  * @property array $shared_stock
  * @property float $draft_premium
  * @property int $stock
+ * @property int $order_sold_base
  */
 class Commodity extends Model
 {
+    protected static bool $orderSoldBaseColumnEnsured = false;
+
     /**
      * @var string
      */
@@ -80,6 +85,7 @@ class Commodity extends Model
         'status' => 'integer',
         'hide' => 'integer',
         'stock' => 'integer',
+        'order_sold_base' => 'integer',
         'owner' => 'integer',
         'integral' => 'integer',
         'delivery_way' => 'integer',
@@ -102,6 +108,34 @@ class Commodity extends Model
         'maximum' => 'integer',
         'shared_stock' => 'json'
     ];
+
+    protected static function booted(): void
+    {
+        self::ensureOrderSoldBaseColumn();
+    }
+
+    public static function ensureOrderSoldBaseColumn(): void
+    {
+        if (self::$orderSoldBaseColumnEnsured) {
+            return;
+        }
+
+        self::$orderSoldBaseColumnEnsured = true;
+
+        $schema = Manager::schema();
+        if (!$schema->hasTable('commodity') || $schema->hasColumn('commodity', 'order_sold_base')) {
+            return;
+        }
+
+        $schema->table('commodity', function (Blueprint $blueprint) {
+            $blueprint->unsignedInteger('order_sold_base')->default(0)->comment('已售初始值');
+        });
+    }
+
+    public static function getDisplayOrderSold(int|string|null $orderSold, int|string|null $orderSoldBase): int
+    {
+        return max(0, (int)$orderSold + (int)$orderSoldBase);
+    }
 
     public function owner(): ?HasOne
     {

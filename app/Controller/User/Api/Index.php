@@ -128,7 +128,7 @@ class Index extends User
                 'id', 'name', 'cover',
                 'status', 'delivery_way', 'price',
                 'user_price',
-                'level_disable', 'level_price', 'hide', 'owner', 'inventory_hidden', "recommend", 'category_id', 'stock', 'shared_id'
+                'level_disable', 'level_price', 'hide', 'owner', 'inventory_hidden', "recommend", 'category_id', 'stock', 'shared_id', 'order_sold_base'
             ])
             ->withCount(['order as order_sold' => function (Builder $relation) {
                 $relation->where("delivery_status", 1);
@@ -167,6 +167,8 @@ class Index extends User
                 $data[$key]['stock'] = Card::query()->where("status", 0)->where("commodity_id", $val['id'])->count();
             }
 
+            $data[$key]['order_sold'] = Commodity::getDisplayOrderSold($val['order_sold'] ?? 0, $val['order_sold_base'] ?? 0);
+
             //如果登录后，则自动计算登录后的价格
             if ($user) {
                 $tradeAmount = $this->order->valuation(commodity: $commodity[$key], group: $userGroup);
@@ -176,7 +178,8 @@ class Index extends User
 
             unset(
                 $data[$key]['level_price'],
-                $data[$key]['level_disable']
+                $data[$key]['level_disable'],
+                $data[$key]['order_sold_base']
             );
 
             if (!$val['cover']) {

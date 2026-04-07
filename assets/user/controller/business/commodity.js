@@ -49,6 +49,14 @@
                             placeholder: "会员零售价",
                             required: true
                         },
+                        {
+                            title: "已售初始值",
+                            name: "order_sold_base",
+                            type: "number",
+                            default: 0,
+                            placeholder: "前台显示的已售基础值",
+                            tips: "前台显示已售 = 实际成交订单数 + 这里设置的初始值"
+                        },
                         {title: "排序", name: "sort", type: "input", default: 1000, placeholder: "排序，越小越靠前"},
                         {title: "状态", name: "status", type: "switch", text: "启用"},
                     ]
@@ -558,6 +566,9 @@ ACC_JP_6M_0KLD-22MM-PP31║地区:日区·时长:6个月
         {field: 'id', title: '商品ID'},
         {
             field: 'card_success_count', title: '已出售'
+        },
+        {
+            field: 'order_sold_base', title: '已售初始值'
         },
         {
             field: 'delivery_way', title: '发货方式', dict: "_commodity_delivery_way"

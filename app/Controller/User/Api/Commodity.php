@@ -142,6 +142,13 @@ class Commodity extends User
             Ini::toArray($map['config']);
         }
 
+        if (isset($map['order_sold_base'])) {
+            $map['order_sold_base'] = (int)$map['order_sold_base'];
+            if ($map['order_sold_base'] < 0) {
+                throw new JSONException("已售初始值不能小于0");
+            }
+        }
+
         $save = new Save(\App\Model\Commodity::class);
         $save->setMap($map);
         $save->addForceMap("owner", $user->id);

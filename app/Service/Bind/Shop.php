@@ -147,7 +147,7 @@ class Shop implements \App\Service\Shop
                 "status", "owner", "delivery_way", "contact_type", "password_status", "level_price",
                 "level_disable", "coupon", "shared_id", "shared_code", "shared_premium", "shared_premium_type", "seckill_status",
                 "seckill_start_time", "seckill_end_time", "draft_status", "draft_premium", "inventory_hidden",
-                "widget", "minimum", "maximum", "shared_sync", "config", "stock", "code"])
+                "widget", "minimum", "maximum", "shared_sync", "config", "stock", "code", "order_sold_base"])
             ->withCount(['order as order_sold' => function (Builder $relation) {
                 $relation->where("delivery_status", 1);
             }]);
@@ -218,7 +218,10 @@ class Shop implements \App\Service\Shop
             $commodity->draft_premium = $this->order->getValuationPrice($commodity->id, $commodity->draft_premium, $group);
         }
 
+        $commodity->order_sold = Commodity::getDisplayOrderSold($commodity->order_sold ?? 0, $commodity->order_sold_base ?? 0);
+
         $array = $commodity->toArray();
+        unset($array['order_sold_base']);
 
         if ($array["owner"]) {
             $business = Business::query()->where("user_id", $array["owner"]['id'])->first();
