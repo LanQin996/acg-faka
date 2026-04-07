@@ -1,5 +1,70 @@
 !function () {
     let table, _createForms = [], _createSearchs = [];
+    const CARD_TEXT_COLLAPSED_HEIGHT = "3.2em";
+    const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, match => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+    })[match]);
+    const isLongCardText = value => {
+        const text = String(value ?? "");
+        return text.length > 80 || text.split(/\r?\n/).length > 2;
+    };
+    const renderCardTextCell = (value, field) => {
+        const text = String(value ?? "");
+        if (text.trim() === "") {
+            return "-";
+        }
+
+        if (!isLongCardText(text)) {
+            return `<div style="max-width: 420px; white-space: pre-wrap; word-break: break-all; line-height: 1.55;">${escapeHtml(text)}</div>`;
+        }
+
+        return `<div class="js-card-text-cell" style="max-width: 420px;">
+    <div class="js-card-text-content" data-expanded="0" style="white-space: pre-wrap; word-break: break-all; line-height: 1.55; max-height: ${CARD_TEXT_COLLAPSED_HEIGHT}; overflow: hidden;">${escapeHtml(text)}</div>
+    <div class="mt-2">
+        <a href="javascript:void(0);" class="a-badge a-badge-primary me-1 js-card-text-toggle" data-field="${field}">${util.icon("fa-duotone fa-regular fa-angles-down")} 展开</a>
+        <a href="javascript:void(0);" class="a-badge a-badge-success js-card-text-copy" data-field="${field}">${util.icon("fa-duotone fa-regular fa-copy")} 复制</a>
+    </div>
+</div>`;
+    };
+    const cardTextEvents = {
+        "click .js-card-text-toggle": function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const $button = $(event.currentTarget);
+            const $wrap = $button.closest(".js-card-text-cell");
+            const $content = $wrap.find(".js-card-text-content").first();
+            const expanded = $content.attr("data-expanded") === "1";
+
+            $content.attr("data-expanded", expanded ? "0" : "1").css({
+                maxHeight: expanded ? CARD_TEXT_COLLAPSED_HEIGHT : "none",
+                overflow: expanded ? "hidden" : "visible"
+            });
+
+            $button.html(`${util.icon(expanded ? "fa-duotone fa-regular fa-angles-down" : "fa-duotone fa-regular fa-angles-up")} ${expanded ? "展开" : "收起"}`);
+            $("#card-table").bootstrapTable("resetView");
+        },
+        "click .js-card-text-copy": function (event, value, row) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const field = $(event.currentTarget).data("field");
+            const text = String(row?.[field] ?? "");
+
+            if (text.trim() === "") {
+                message.error("没有可复制的内容");
+                return;
+            }
+
+            util.copyTextToClipboard(text, () => {
+                message.success("复制成功");
+            });
+        }
+    };
     const uploadCard = () => {
         component.popup({
             submit: '/admin/api/card/save',
@@ -237,10 +302,16 @@ ACC_JP_6M_0KLD-22MM-PP31║地区:日区·时长:6个月
     table.setColumns([
         {checkbox: true},
         {
-            field: 'secret', title: '卡密信息'
+            field: 'secret',
+            title: '卡密信息',
+            formatter: value => renderCardTextCell(value, "secret"),
+            events: cardTextEvents
         },
         {
-            field: 'draft', title: '预告内容'
+            field: 'draft',
+            title: '预告内容',
+            formatter: value => renderCardTextCell(value, "draft"),
+            events: cardTextEvents
         },
         {
             field: 'draft_premium', title: '预选加价', formatter: _ => format.money(_)

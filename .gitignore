@@ -23,3 +23,4 @@ app/Plugin/Remember/Config/Submit.php
 app/Plugin/Remember/Hook/Main.php
 app/Plugin/Remember/View/Memory.html
 acg-faka.zip
+app/View/User/Theme/PureLite.zip
