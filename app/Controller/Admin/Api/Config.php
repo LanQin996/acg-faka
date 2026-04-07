@@ -14,6 +14,7 @@ use App\Service\Query;
 use App\Service\Sms;
 use App\Util\Client;
 use App\Util\Date;
+use App\Util\Theme;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Kernel\Annotation\Inject;
@@ -49,6 +50,14 @@ class Config extends Manage
         $keys = ["closed_message", "background_mobile_url", "closed", "username_len", "user_theme", "user_mobile_theme", "background_url", "shop_name", "title", "description", "keywords", "registered_state", "registered_type", "registered_verification", "registered_phone_verification", "registered_email_verification", "login_verification", "forget_type", "notice", "trade_verification", "session_expire"]; //全部字段
         $inits = ["closed", "registered_state", "registered_type", "registered_verification", "registered_phone_verification", "registered_email_verification", "login_verification", "forget_type", "trade_verification", "session_expire"]; //需要初始化的字段
 
+        if (!Theme::getConfig((string)$post['user_theme'])) {
+            throw new JSONException("PC模板不存在或配置异常");
+        }
+
+        if ((string)$post['user_mobile_theme'] !== "0" && !Theme::getConfig((string)$post['user_mobile_theme'])) {
+            throw new JSONException("手机模板不存在或配置异常");
+        }
+
         $file = $post['logo'];
         if ($file != '/favicon.ico') {
             @copy(BASE_PATH . $file, BASE_PATH . '/favicon.ico');
@@ -70,8 +79,6 @@ class Config extends Manage
         } catch (\Exception $e) {
             throw new JSONException("保存失败，请检查原因");
         }
-
-        _plugin_start($post['user_theme'], true);
         ManageLog::log($this->getManage(), "修改了网站设置");
         return $this->json(200, '保存成功');
     }

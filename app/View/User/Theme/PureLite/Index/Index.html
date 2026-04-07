@@ -1,0 +1,55 @@
+#{include file="./Header.html"}
+<main class="purelite-home">
+    <section class="container purelite-page-space">
+        <section class="purelite-notice-card">
+            <div class="purelite-notice-head">
+                <div class="purelite-notice-title">
+                    <span class="purelite-dot purelite-dot-blue"></span>
+                    <h2>店铺公告</h2>
+                </div>
+            </div>
+            <div class="purelite-notice-divider">
+                <span class="purelite-divider-dot"></span>
+            </div>
+            <div class="purelite-notice-body">#{$config.notice}</div>
+        </section>
+
+        <section class="purelite-filter-panel" id="commodity-list-anchor">
+            <div class="chip-list purelite-chip-list">
+                #{foreach $category as $cate}
+                    <a data-id="#{$cate.id}" class="switch-category chip purelite-chip #{if $cate@first && $categoryId == 0} is-primary #{elseif $cate.id == $categoryId} is-primary #{/if}" href="javascript:void(0);">
+                        #{if $cate.id != 'recommend'}
+                            <span class="chip-icon" style="background: url('#{$cate.icon}') center/cover no-repeat;"></span>
+                        #{/if}
+                        #{$cate.name}
+                    </a>
+                #{/foreach}
+            </div>
+
+            <div class="purelite-search-wrap" id="commodity-search-anchor">
+                <div class="purelite-search-box">
+                    <button class="purelite-search-submit" type="button" aria-label="搜索商品">
+                        <i class="fa-duotone fa-regular fa-magnifying-glass"></i>
+                    </button>
+                    <input class="item-search-input" type="search" placeholder="搜索您的商品..." aria-label="搜索商品">
+                    <button class="purelite-search-clear" type="button" aria-label="清空搜索">
+                        <i class="fa-duotone fa-regular fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="purelite-product-section">
+            <div class="purelite-section-caption">
+                <span class="purelite-section-line"></span>
+                <span class="purelite-current-category">全部商品</span>
+            </div>
+
+            <div class="item-list purelite-item-list">
+                <div class="item-message purelite-empty-message">正在加载商品...</div>
+            </div>
+        </section>
+    </section>
+</main>
+<script>ready("#{$static}/assets/index.js?v=#{$app.version}-purelite-fix3");</script>
+#{include file="./Footer.html"}

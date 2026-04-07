@@ -1,0 +1,24 @@
+#{include file="./Header.html"}
+<main class="purelite-home">
+    <section class="container purelite-page-space">
+        <div class="purelite-closed-card">
+            <div class="purelite-closed-icon">
+                <i class="fa-duotone fa-regular fa-shield-halved"></i>
+            </div>
+            <p class="purelite-section-kicker">STORE STATUS</p>
+            <h1>店铺暂时维护中</h1>
+            <p>#{$config.closed_message}</p>
+            <div class="purelite-hero-actions">
+                <a class="purelite-action primary" href="/user/index/query">
+                    <i class="fa-duotone fa-regular fa-rectangle-history-circle-user"></i>
+                    <span>订单查询</span>
+                </a>
+                <a class="purelite-action ghost" href="#{$config.service_url}" target="_blank">
+                    <i class="fa-duotone fa-regular fa-headset"></i>
+                    <span>联系客服</span>
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+#{include file="./Footer.html"}
