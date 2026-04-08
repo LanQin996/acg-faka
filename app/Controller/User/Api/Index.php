@@ -130,9 +130,7 @@ class Index extends User
                 'user_price',
                 'level_disable', 'level_price', 'hide', 'owner', 'inventory_hidden', "recommend", 'category_id', 'stock', 'shared_id', 'order_sold_base'
             ])
-            ->withCount(['order as order_sold' => function (Builder $relation) {
-                $relation->where("delivery_status", 1);
-            }]);
+            ->withDisplayOrderSold();
         if ($limit == 0) {
             $commodity = $commodity
                 ->get();

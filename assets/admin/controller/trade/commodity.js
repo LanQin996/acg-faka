@@ -58,7 +58,7 @@
                             type: "number",
                             default: 0,
                             placeholder: "前台显示的已售基础值",
-                            tips: "前台显示已售 = 实际成交订单数 + 这里设置的初始值"
+                            tips: "前台显示已售 = 实际成交数量 + 这里设置的初始值"
                         },
                         {title: "排序", name: "sort", type: "input", placeholder: "排序，越小越靠前"},
                         {title: "状态", name: "status", type: "switch", text: "启用"},

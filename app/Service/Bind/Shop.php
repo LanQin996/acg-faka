@@ -148,9 +148,7 @@ class Shop implements \App\Service\Shop
                 "level_disable", "coupon", "shared_id", "shared_code", "shared_premium", "shared_premium_type", "seckill_status",
                 "seckill_start_time", "seckill_end_time", "draft_status", "draft_premium", "inventory_hidden",
                 "widget", "minimum", "maximum", "shared_sync", "config", "stock", "code", "order_sold_base"])
-            ->withCount(['order as order_sold' => function (Builder $relation) {
-                $relation->where("delivery_status", 1);
-            }]);
+            ->withDisplayOrderSold();
 
         if (is_int($commodityId)) {
             $commodity = $commodity->find($commodityId);

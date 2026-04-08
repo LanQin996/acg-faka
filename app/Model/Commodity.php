@@ -5,6 +5,7 @@ namespace App\Model;
 
 
 use App\Util\Ini;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -135,6 +136,17 @@ class Commodity extends Model
     public static function getDisplayOrderSold(int|string|null $orderSold, int|string|null $orderSoldBase): int
     {
         return max(0, (int)$orderSold + (int)$orderSoldBase);
+    }
+
+    public function scopeWithDisplayOrderSold(Builder $query, string $alias = 'order_sold'): Builder
+    {
+        return $query->selectSub(
+            Order::query()
+                ->selectRaw('COALESCE(SUM(card_num), 0)')
+                ->whereColumn('commodity_id', 'commodity.id')
+                ->where('delivery_status', 1),
+            $alias
+        );
     }
 
     public function owner(): ?HasOne
