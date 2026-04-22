@@ -15,6 +15,7 @@ use Kernel\Annotation\Inject;
 use Kernel\Consts\Base;
 use Kernel\Exception\JSONException;
 use Kernel\Util\Context;
+use Kernel\Util\Plugin;
 use Kernel\Util\SQL;
 
 /**
@@ -192,7 +193,7 @@ class App implements \App\Service\App
 
         if ($type == 0) {
             //安装
-            \Kernel\Util\Plugin::runHookState($key, \Kernel\Annotation\Plugin::INSTALL);
+            Plugin::runHookState($key, \Kernel\Annotation\Plugin::INSTALL);
         }
     }
 
@@ -239,7 +240,20 @@ class App implements \App\Service\App
         }
 
         if ($type == 0) {
-            \Kernel\Util\Plugin::runHookState($key, \Kernel\Annotation\Plugin::UPGRADE);
+            Plugin::runHookState($key, \Kernel\Annotation\Plugin::UPGRADE);
+        } elseif ($type == 2) {
+            //清空模版缓存
+            $viewDir = realpath(BASE_PATH . "/runtime/view/");
+            if ($viewDir) {
+                File::delDirectory($viewDir);
+            }
+        }
+
+        $files = [BASE_PATH . '/runtime/plugin/store.cache', BASE_PATH . '/runtime/plugin/update.cache'];
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
         }
     }
 
@@ -352,7 +366,7 @@ class App implements \App\Service\App
                 try {
                     File::copyDirectory($zipPath . '/file', BASE_PATH);
                 } catch (\Exception $e) {
-                    throw new JSONException("程序升级失败，没有写入目录权限！");
+                    throw new JSONException($e->getMessage());
                 }
 
                 //升级完成，记录版本号

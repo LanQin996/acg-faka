@@ -10,9 +10,10 @@ use App\Interceptor\UserVisitor;
 use App\Interceptor\Waf;
 use App\Model\Config;
 use App\Service\Shop;
-use App\Util\Client;
+use App\Util\Tree;
 use Kernel\Annotation\Inject;
 use Kernel\Annotation\Interceptor;
+use Kernel\Exception\JSONException;
 use Kernel\Exception\RuntimeException;
 use Kernel\Exception\ViewException;
 
@@ -26,6 +27,7 @@ class Index extends User
      * @return string
      * @throws RuntimeException
      * @throws ViewException
+     * @throws JSONException
      * @throws \ReflectionException
      */
     public function index(): string
@@ -38,7 +40,7 @@ class Index extends User
         $_GET['cid'] = $_GET['cid'] ?: Config::get("default_category");
 
         //获取所有分类
-        $category = $this->shop->getCategory($this->getUserGroup());
+        $category = Tree::generate($this->shop->getCategory($this->getUserGroup()));
         hook(Hook::USER_API_INDEX_CATEGORY_LIST, $category);
 
         return $this->theme("购物", "INDEX", "Index/Index.html", [
@@ -51,6 +53,7 @@ class Index extends User
 
     /**
      * @return string
+     * @throws JSONException
      * @throws ViewException
      * @throws \ReflectionException
      */
@@ -80,6 +83,7 @@ class Index extends User
 
     /**
      * @return string
+     * @throws JSONException
      * @throws ViewException
      * @throws \ReflectionException
      */

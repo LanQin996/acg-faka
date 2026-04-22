@@ -37,6 +37,16 @@ interface Order
     public function valuation(Commodity|int $commodity, int $num = 1, ?string $race = null, ?array $sku = [], ?int $cardId = null, ?string $coupon = null, ?UserGroup $group = null): string;
 
     /**
+     * @param Commodity|int $commodity
+     * @param int $num
+     * @param string|null $race
+     * @param array|null $sku
+     * @param int|null $cardId
+     * @return string
+     */
+    public function getCost(Commodity|int $commodity, int $num = 1, ?string $race = null, ?array $sku = [], ?int $cardId = null): string;
+
+    /**
      * @param int $commodityId
      * @param string|float|int $price
      * @param UserGroup|null $group
@@ -89,6 +99,12 @@ interface Order
      */
     public function callback(string $handle, array $map): string;
 
+    /**
+     * @param string $handle
+     * @param array $map
+     * @return string|null
+     */
+    public function getCallbackTradeNo(string $handle, array $map): ?string;
 
     /**
      * @param \App\Model\Order $order

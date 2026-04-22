@@ -11,6 +11,7 @@ use Kernel\Annotation\Inject;
 use Kernel\Annotation\Interceptor;
 use Kernel\Context\Interface\Request;
 use Kernel\Exception\JSONException;
+use Kernel\Util\Arr;
 
 #[Interceptor(Waf::class, Interceptor::TYPE_API)]
 class RechargeNotification extends User
@@ -28,12 +29,24 @@ class RechargeNotification extends User
         $handle = $_GET['_PARAMETER'][0];
         foreach (['unsafePost', 'unsafeJson', 'unsafeGet'] as $method) {
             $data = $request->$method();
+            if (isset($data['s'])) unset($data['s']);
+            if (isset($data['_PARAMETER'])) unset($data['_PARAMETER']);
             if (!empty($data)) {
                 break;
             }
         }
-        if (isset($data['s'])) unset($data['s']);
-        if (isset($data['_PARAMETER'])) unset($data['_PARAMETER']);
+
+        if (empty($data)) {
+            $data = json_decode($request->raw(), true);
+        }
+
+        if (empty($data)) {
+            $data = Arr::xmlToArray((string)file_get_contents("php://input"));
+        }
+
+        if (empty($data)) {
+            throw new JSONException("数据为空");
+        }
 
         if (isset($data['sign']) && Str::isInvalidSign($data['sign'])) {
             throw new JSONException("非法签名");

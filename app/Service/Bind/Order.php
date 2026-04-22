@@ -138,14 +138,20 @@ class Order implements \App\Service\Order
         }
 
         if (!$commodity) {
-            throw new JSONException("商品不存在");
+            throw new JSONException("商品不存在#1");
         }
 
         $commodity = clone $commodity;
+        $price = (new Decimal($group ? $commodity->user_price : $commodity->price, 2));
+
+        $levelPrice = $this->userDefinedPrice($commodity, $group);
+        if ($levelPrice && $levelPrice['amount'] > 0 && $levelPrice['amount'] < $price->getAmount()) {
+            $price = new Decimal($levelPrice['amount'], 2);
+        }
 
         //解析配置文件
         $this->parseConfig($commodity, $group);
-        $price = (new Decimal($group ? $commodity->user_price : $commodity->price, 2));
+
 
         //算出race价格
         if (!empty($race) && !empty($commodity->config['category'])) {
@@ -314,6 +320,83 @@ class Order implements \App\Service\Order
         return $price->mul($num)->getAmount();
     }
 
+
+    /**
+     * @param Commodity|int $commodity
+     * @param int $num
+     * @param string|null $race
+     * @param array|null $sku
+     * @param int|null $cardId
+     * @return string
+     * @throws JSONException
+     * @throws \ReflectionException
+     */
+    public function getCost(Commodity|int $commodity, int $num = 1, ?string $race = null, ?array $sku = [], ?int $cardId = null): string
+    {
+        if (is_int($commodity)) {
+            $commodity = Commodity::query()->find($commodity);
+        }
+
+        if (!$commodity) {
+            throw new JSONException("商品不存在");
+        }
+
+        $commodity = clone $commodity;
+
+        //默认成本价
+        $price = (new Decimal($commodity->factory_price, 2));
+
+        //解析配置文件
+        $config = Ini::toArray($commodity->config ?: "") ?: [];
+
+
+        //算出race成本价格
+        if (!empty($race) && !empty($config['category_cost'])) {
+            $_race = $config['category_cost'];
+            if (isset($_race[$race])) {
+                $price = (new Decimal($_race[$race], 2));
+            } else {
+                $price = (new Decimal(0, 2));
+            }
+        }
+
+        //算出sku成本价格
+        if (!empty($sku) && !empty($config['sku_cost'])) {
+            $_sku = $config['sku_cost'];
+            foreach ($sku as $k => $v) {
+                if (isset($_sku[$k][$v])) {
+                    $_sku_price = $_sku[$k][$v] ?: 0;
+                    if (is_numeric($_sku_price) && $_sku_price > 0) {
+                        //成本add
+                        $price = $price->add($_sku_price);
+                    }
+                }
+            }
+        }
+
+        //card自选加价成本
+        if (!empty($cardId) && $commodity->draft_status == 1 && $num == 1) {
+            /**
+             * @var \App\Service\Shop $shop
+             */
+            $shop = Di::inst()->make(\App\Service\Shop::class);
+
+            if ($commodity->shared) {
+                $draft = $this->shared->getDraft($commodity->shared, $commodity->shared_code, $cardId);
+                $draftPremium = $draft['draft_premium']; //远程的本价，就是成本
+            } else {
+                $draft = $shop->getDraft($commodity, $cardId);
+                $draftPremium = $draft['cost']; //本地的成本价
+            }
+
+            if ($draftPremium > 0) {
+                $price = $price->add($draftPremium);
+            }
+        }
+
+        //返回全部成本价
+        return $price->mul($num)->getAmount();
+    }
 
     /**
      * @param int $commodityId
@@ -527,8 +610,12 @@ class Order implements \App\Service\Order
             }
         }
 
+        $rent = 0;
+
         if ($commodity->shared) {
-            $stock = $this->shared->getItemStock($commodity->shared, $commodity->shared_code, $race ?: null, $sku ?: []);
+            $stock = $this->shared->getItemStock((clone $commodity), $commodity->shared, $commodity->shared_code, $race ?: null, $sku ?: []);
+            //询价
+            $rent = $this->shared->getValuation((clone $commodity), $commodity->shared, $commodity->shared_code, $num, $race, $sku, $cardId);
         } else {
             $stock = $shopService->getItemStock($commodity, $race, $sku);
         }
@@ -544,9 +631,9 @@ class Order implements \App\Service\Order
             }
         }
 
-
         //计算订单价格
         $amount = $this->valuation($commodity, $num, $race, $sku, $cardId, $coupon, $userGroup);
+        $rent == 0 && $rent = $this->getCost($commodity, $num, $race, $sku, $cardId);
         $rebate = 0;
         $divideAmount = 0;
 
@@ -617,7 +704,7 @@ class Order implements \App\Service\Order
         }
 
         DB::connection()->getPdo()->exec("set session transaction isolation level serializable");
-        $result = Db::transaction(function () use ($commodity, $rebate, $divideAmount, $business, $sku, $requestNo, $user, $userGroup, $num, $contact, $device, $amount, $owner, $pay, $cardId, $password, $coupon, $from, $widget, $race, $callbackDomain, $clientDomain) {
+        $result = Db::transaction(function () use ($commodity, $rent, $rebate, $divideAmount, $business, $sku, $requestNo, $user, $userGroup, $num, $contact, $device, $amount, $owner, $pay, $cardId, $password, $coupon, $from, $widget, $race, $callbackDomain, $clientDomain) {
             //生成联系方式
             if ($user) {
                 $contact = Str::generateRandStr(16);
@@ -644,6 +731,7 @@ class Order implements \App\Service\Order
             $order->delivery_status = 0;
             $order->card_num = $num;
             $order->user_id = (int)$commodity->owner;
+            $order->rent = $rent;
 
             if ($requestNo) $order->request_no = $requestNo;
             if (!empty($race)) $order->race = $race;
@@ -820,6 +908,26 @@ class Order implements \App\Service\Order
 
 
     /**
+     * @param string $handle
+     * @param array $map
+     * @return string|null
+     */
+    public function getCallbackTradeNo(string $handle, array $map): ?string
+    {
+        $payInfo = PayConfig::info($handle);
+        $payConfig = PayConfig::config($handle);
+        $callback = $payInfo['callback'];
+
+        $autoload = BASE_PATH . '/app/Pay/' . $handle . "/Vendor/autoload.php";
+        if (file_exists($autoload)) {
+            require($autoload);
+        }
+
+        return $map[$callback[\App\Consts\Pay::FIELD_ORDER_KEY]] ?: null;
+    }
+
+
+    /**
      * @param \App\Model\Order $order
      * @return string
      * @throws JSONException
@@ -968,6 +1076,22 @@ class Order implements \App\Service\Order
         $handle = Firewall::inst()->xssKiller($handle);
         if (!Str::isValid($handle) || !PayConfig::isValid($handle)) {
             throw new JSONException("handle not found");
+        }
+
+        $tradeNo = $this->getCallbackTradeNo($handle, $map);
+
+        if (!$tradeNo) {
+            throw new JSONException("order number not found");
+        }
+
+        $order = \App\Model\Order::with(['pay'])->where("trade_no", $tradeNo)->first();
+
+        if (!$order->pay) {
+            throw new JSONException("pay not found");
+        }
+
+        if ($order->pay->handle !== $handle) {
+            throw new JSONException("pay handle not found");
         }
 
         $callback = $this->callbackInitialize($handle, $map);
