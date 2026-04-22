@@ -167,6 +167,10 @@ class Commodity extends Manage
             }
         }
 
+        if (isset($map['contact_required'])) {
+            $map['contact_required'] = (int)(bool)$map['contact_required'];
+        }
+
         $save = new Save(\App\Model\Commodity::class);
         $save->setMap($map);
         $save->enableCreateTime();

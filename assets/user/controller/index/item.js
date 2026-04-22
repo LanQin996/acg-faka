@@ -214,6 +214,15 @@
 
         $(document).on("click", `.pay-list .pay`, function () {
             let post = _getPostData();
+            const contactLabel = _item.contact_type === 0 ? "联系方式" : $(".vstack input[name=contact]").closest("div, .purelite-field").find("label").first().text().replace("*", "").trim();
+
+            if (Number(_item.contact_required || 0) === 1 && !String(post.contact || "").trim()) {
+                message.error(`请填写${contactLabel}`);
+                const $contactInput = $(".vstack input[name=contact]").first();
+                $contactInput.trigger("focus");
+                return;
+            }
+
             post["pay_id"] = $(this).data("id");
             util.post("/user/api/order/trade", post, res => {
                 if (post["pay_id"] == 1) {

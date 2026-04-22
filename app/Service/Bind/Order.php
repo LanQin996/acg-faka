@@ -409,7 +409,7 @@ class Order implements \App\Service\Order
     {
         #CFG begin
         $commodityId = (int)$map['item_id'];//商品ID
-        $contact = (string)$map['contact'];//联系方式
+        $contact = trim((string)($map['contact'] ?? ''));//联系方式
         $num = (int)$map['num']; //购买数量
         $cardId = (int)$map['card_id'];//预选的卡号ID
         $payId = (int)$map['pay_id'];//支付方式id
@@ -491,23 +491,28 @@ class Order implements \App\Service\Order
 
         $regx = ['/^1[3456789]\d{9}$/', '/.*(.{2}@.*)$/i', '/[1-9]{1}[0-9]{4,11}/'];
         $msg = ['手机', '邮箱', 'QQ号'];
-        //未登录才检测，登录后无需检测
+        $contactLabel = $commodity->contact_type === 0 ? '联系方式' : $msg[$commodity->contact_type - 1];
 
         /**
          * @var \App\Service\Shop $shopService
          */
         $shopService = Di::inst()->make(\App\Service\Shop::class);
 
-        if (!$user) {
+        if ($commodity->contact_required == 1 && $contact === '') {
+            throw new JSONException("请填写{$contactLabel}");
+        }
+
+        if ($contact !== '') {
             if (mb_strlen($contact) < 3) {
                 throw new JSONException("联系方式不能低于3个字符");
             }
-            //联系方式正则判断
-            if ($commodity->contact_type != 0) {
-                if (!preg_match($regx[$commodity->contact_type - 1], $contact)) {
-                    throw new JSONException("您输入的{$msg[$commodity->contact_type - 1]}格式不正确！");
-                }
+
+            if ($commodity->contact_type != 0 && !preg_match($regx[$commodity->contact_type - 1], $contact)) {
+                throw new JSONException("您输入的{$msg[$commodity->contact_type - 1]}格式不正确！");
             }
+        }
+
+        if (!$user) {
             if ($commodity->password_status == 1 && mb_strlen($password) < 6) {
                 throw new JSONException("您的设置的密码过于简单，不能低于6位哦");
             }

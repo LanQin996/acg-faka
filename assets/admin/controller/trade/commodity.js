@@ -132,6 +132,13 @@
                             required: true
                         },
                         {
+                            title: "联系方式必填",
+                            name: "contact_required",
+                            type: "switch",
+                            text: "启用",
+                            tips: "开启后，下单时必须填写联系方式；关闭后可留空"
+                        },
+                        {
                             title: "邮件发送",
                             name: "send_email",
                             type: "switch",
@@ -807,6 +814,9 @@ ACC_JP_6M_0KLD-22MM-PP31║地区:日区·时长:6个月
         },
         {
             field: 'contact_type', title: '联系方式', dict: "_contact_type"
+        },
+        {
+            field: 'contact_required', title: '联系方式必填', dict: "_commodity_api_status"
         },
         {
             field: 'password_status', title: '订单密码', dict: "_commodity_api_status"

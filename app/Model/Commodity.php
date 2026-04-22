@@ -32,6 +32,7 @@ use Kernel\Exception\JSONException;
  * @property string $delivery_message
  * @property int $contact_type
  * @property int $sort
+ * @property int $contact_required
  * @property int $password_status
  * @property int $coupon
  * @property int $shared_id
@@ -62,7 +63,7 @@ use Kernel\Exception\JSONException;
  */
 class Commodity extends Model
 {
-    protected static bool $orderSoldBaseColumnEnsured = false;
+    protected static bool $runtimeColumnsEnsured = false;
 
     /**
      * @var string
@@ -92,6 +93,7 @@ class Commodity extends Model
         'delivery_way' => 'integer',
         'delivery_auto_mode' => 'integer',
         'contact_type' => 'integer',
+        'contact_required' => 'integer',
         'sort' => 'integer',
         'coupon' => 'integer',
         'shared_id' => 'integer',
@@ -112,25 +114,33 @@ class Commodity extends Model
 
     protected static function booted(): void
     {
-        self::ensureOrderSoldBaseColumn();
+        self::ensureRuntimeColumns();
     }
 
-    public static function ensureOrderSoldBaseColumn(): void
+    public static function ensureRuntimeColumns(): void
     {
-        if (self::$orderSoldBaseColumnEnsured) {
+        if (self::$runtimeColumnsEnsured) {
             return;
         }
 
-        self::$orderSoldBaseColumnEnsured = true;
+        self::$runtimeColumnsEnsured = true;
 
         $schema = Manager::schema();
-        if (!$schema->hasTable('commodity') || $schema->hasColumn('commodity', 'order_sold_base')) {
+        if (!$schema->hasTable('commodity')) {
             return;
         }
 
-        $schema->table('commodity', function (Blueprint $blueprint) {
-            $blueprint->unsignedInteger('order_sold_base')->default(0)->comment('已售初始值');
-        });
+        if (!$schema->hasColumn('commodity', 'order_sold_base')) {
+            $schema->table('commodity', function (Blueprint $blueprint) {
+                $blueprint->unsignedInteger('order_sold_base')->default(0)->comment('已售初始值');
+            });
+        }
+
+        if (!$schema->hasColumn('commodity', 'contact_required')) {
+            $schema->table('commodity', function (Blueprint $blueprint) {
+                $blueprint->unsignedTinyInteger('contact_required')->default(0)->comment('联系方式是否必填');
+            });
+        }
     }
 
     public static function getDisplayOrderSold(int|string|null $orderSold, int|string|null $orderSoldBase): int

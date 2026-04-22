@@ -71,11 +71,17 @@
                                 </div>
                             #{/if}
 
-                            #{if !$user}
+                            #{if !$user || $item.contact_required == 1}
                                 <div>
-                                    <label class="form-label mb-1">#{contact_type_msg($item.contact_type)}</label>
-                                    <input type="text" name="contact" class="form-control"
-                                           placeholder="请输入您的#{contact_type_msg($item.contact_type)}">
+                                    <label class="form-label mb-1">
+                                        #{contact_type_msg($item.contact_type)}
+                                        #{if $item.contact_required == 1}<span class="text-danger">*</span>#{/if}
+                                    </label>
+                                    <input type="text"
+                                           name="contact"
+                                           class="form-control"
+                                           #{if $item.contact_required == 1}required#{/if}
+                                           placeholder="请输入您的#{contact_type_msg($item.contact_type)}#{if $item.contact_required == 1}（必填）#{/if}">
                                 </div>
                             #{/if}
 

@@ -147,7 +147,7 @@ class Shop implements \App\Service\Shop
                 "status", "owner", "delivery_way", "contact_type", "password_status", "level_price",
                 "level_disable", "coupon", "shared_id", "shared_code", "shared_premium", "shared_premium_type", "seckill_status",
                 "seckill_start_time", "seckill_end_time", "draft_status", "draft_premium", "inventory_hidden",
-                "widget", "minimum", "maximum", "shared_sync", "config", "stock", "code", "order_sold_base"])
+                "widget", "minimum", "maximum", "shared_sync", "config", "stock", "code", "order_sold_base", "contact_required"])
             ->withDisplayOrderSold();
 
         if (is_int($commodityId)) {
